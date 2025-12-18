@@ -25,7 +25,7 @@ jobs:
 
       - name: Sync repository to server
         env:
-          RSYNC_RSH: "ssh -o StrictHostKeyChecking=yes"
+          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no"
         run: |
           rsync -av --delete --exclude='.git' --exclude='node_modules' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
         
