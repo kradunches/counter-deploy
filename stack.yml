@@ -1,0 +1,53 @@
+services:
+  app:
+    # build:
+    #   context: ./
+    #   dockerfile: Dockerfile
+    image: docker.io/cheryaev/counter-app:1.0
+    env_file:
+      - ./backend/.env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+    ports:
+      - target: 8000
+        published: 80
+        protocol: tcp
+        mode: ingress
+
+    depends_on:
+      - redis
+
+    deploy:
+      replicas: 4
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+        max_attempts: 10
+        window: 60s
+      update_config:
+        parallelism: 1
+        delay: 3s
+        order: start-first
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/counter').read()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+volumes:
+  redis_data:
